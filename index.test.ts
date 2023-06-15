@@ -33,6 +33,22 @@ describe('Replicate client', () => {
       });
       expect(clientWithCustomUserAgent.userAgent).toBe('my-app/1.2.3');
     });
+
+    test('Throws error if no auth token is provided', () => {
+      const expected = 'Missing required parameter: auth'
+
+      expect(() => {
+        new Replicate({ auth: undefined });
+      }).toThrow(expected);
+
+      expect(() => {
+        new Replicate({ auth: null });
+      }).toThrow(expected);
+
+      expect(() => {
+        new Replicate({ auth: "" });
+      }).toThrow(expected);
+    });
   });
 
   describe('collections.list', () => {
@@ -134,6 +150,18 @@ describe('Replicate client', () => {
         webhook_events_filter: [ 'output', 'completed' ],
       });
       expect(prediction.id).toBe('ufawqhfynnddngldkgtslldrkq');
+    });
+
+    test('Throws an error if webhook URL is invalid', async () => {
+      await expect(async () => {
+        await client.predictions.create({
+          version: '5c7d5dc6dd8bf75c1acaa8565735e7986bc5b66206b55cca93cb72c9bf15ccaa',
+          input: {
+            text: 'Alice',
+          },
+          webhook: 'invalid-url',
+        });
+      }).rejects.toThrow('Invalid webhook URL');
     });
     // Add more tests for error handling, edge cases, etc.
   });
@@ -303,6 +331,23 @@ describe('Replicate client', () => {
         }
       );
       expect(training.id).toBe('zz4ibbonubfz7carwiefibzgga');
+    });
+
+    test('Throws an error if webhook is not a valid URL', async () => {
+      await expect(
+        client.trainings.create(
+          'owner',
+          'model',
+          '632231d0d49d34d5c4633bd838aee3d81d936e59a886fbf28524702003b4c532',
+          {
+            destination: 'new_owner/new_model',
+            input: {
+              text: '...',
+            },
+            webhook: 'invalid-url',
+          }
+        )
+      ).rejects.toThrow('Invalid webhook URL');
     });
 
     // Add more tests for error handling, edge cases, etc.
@@ -482,6 +527,18 @@ describe('Replicate client', () => {
 
       // @ts-expect-error
       await expect(client.run(':abc123', options)).rejects.toThrow();
+    });
+
+    test('Throws an error if webhook URL is invalid', async () => {
+      await expect(async () => {
+        await client.run(
+          'owner/model:5c7d5dc6dd8bf75c1acaa8565735e7986bc5b66206b55cca93cb72c9bf15ccaa', {
+          input: {
+            text: 'Alice',
+          },
+          webhook: 'invalid-url',
+        });
+      }).rejects.toThrow('Invalid webhook URL');
     });
   });
 
